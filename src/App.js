@@ -59,8 +59,8 @@ class App extends Component {
 
         <div className="px-3 py-2">
           <form onSubmit={this.addItem} className="form-inline my-3">
-            <div className="form-group mb-2 p-0 pr-3col-8 col-sm-10">
-              <input className='form-controll col-12' placeholder="Add item" value={this.state.todoitem} onChange={(e) => this.setState({ todoitem: e.target.value })}  />
+            <div className="form-group mb-2 p-0 pr-3 col-8 col-sm-10">
+              <input className='form-control col-12' placeholder="Add item" value={this.state.todoitem} onChange={(e) => this.setState({ todoitem: e.target.value })}  />
             </div>
             <button type="submit" className="btn btn-primary mb-2 col-4 col-sm-2">Add</button>
           </form>

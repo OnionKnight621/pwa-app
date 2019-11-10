@@ -4,11 +4,14 @@ const uuidV4 = require('uuid/v4');
 const cors = require('cors');
 const morgan = require('morgan');
 
+const config = require('../configs');
+
 const app = express();
-const port = 4567;
+const port = config.server.port;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms [:date[clf]]'));
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
