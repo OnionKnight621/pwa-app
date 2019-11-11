@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { DH_NOT_SUITABLE_GENERATOR } from 'constants';
 
 const localhostIp = `http://192.168.0.104:4567`;
 
@@ -8,7 +9,8 @@ class App extends Component {
   state = {
     items: [],
     loading: true,
-    todoitem: ''
+    item: '',
+    offline: !navigator.onLine
   };
 
   componentDidMount() {
@@ -17,6 +19,18 @@ class App extends Component {
       .then(items => {
         this.setState({ items, loading: false })
       });
+
+    window.addEventListener('online', this.setOfflineMode);
+    window.addEventListener('offline', this.setOfflineMode);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('online', this.setOfflineMode);
+    window.removeEventListener('offline', this.setOfflineMode);
+  }
+
+  setOfflineMode = () => {
+    this.setState({ offline: !navigator.onLine})
   }
 
   addItem = (e) => {
@@ -24,12 +38,16 @@ class App extends Component {
 
     fetch(`${localhostIp}/items`, {
       method: 'POST',
-      body: JSON.stringify({ item: this.state.todoitem }),
+      body: JSON.stringify({ item: this.state.item }),
       headers: { 'Content-Type': 'application/json' }
     })
       .then(response => response.json())
       .then(items => {
-        this.setState({ items })
+        if (items.error) {
+          alert(items.error)
+        } else {
+          this.setState({ items })
+        }
       });
     
     this.setState({ todoitem: '' });
@@ -43,7 +61,11 @@ class App extends Component {
     })
       .then(response => response.json())
       .then(items => {
-        this.setState({ items })
+        if (items.error) {
+          alert(items.error)
+        } else {
+          this.setState({ items })
+        }
       });
   }
 
@@ -55,12 +77,19 @@ class App extends Component {
             <img src={logo} alt="logo" className="App-logo" width="50%" height="50%"/>
             Items list
           </span>
+
+          {
+            this.state.offline &&
+            <span className="badge badge-danger my-3">
+              offline
+            </span>
+          }
         </nav>
 
         <div className="px-3 py-2">
           <form onSubmit={this.addItem} className="form-inline my-3">
             <div className="form-group mb-2 p-0 pr-3 col-8 col-sm-10">
-              <input className='form-control col-12' placeholder="Add item" value={this.state.todoitem} onChange={(e) => this.setState({ todoitem: e.target.value })}  />
+              <input className='form-control col-12' placeholder="Add item" value={this.state.item} onChange={(e) => this.setState({ item: e.target.value })}  />
             </div>
             <button type="submit" className="btn btn-primary mb-2 col-4 col-sm-2">Add</button>
           </form>

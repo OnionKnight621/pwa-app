@@ -18,14 +18,28 @@ self.addEventListener('activate', event => {
 
 workbox.routing.registerRoute(
     new RegExp('https:.*min\.(css|js)'),
-    workbox.strategies.staleWhileRevalidate({
+    new workbox.strategies.StaleWhileRevalidate({
         cacheName: 'bootstrap-cdn-cache'
     })
 )
 
 workbox.routing.registerRoute(
     new RegExp(`http://.*:4567.*`),
-    workbox.strategies.networkFirst()
+    new workbox.strategies.NetworkFirst()
 )
+
+self.addEventListener('fetch', event => {
+    if(event.request.method === 'POST' || event.request.method === 'DELETE') {
+        event.respondWith(
+            fetch(event.request).catch(err => {
+                return new Response(
+                    JSON.stringify({error: `Action is unavailable while app is offline (${err})`}), {
+                        headers: { 'Content-Type': 'application/json' }
+                    }
+                )
+            })
+        )
+    }
+})
 
 workbox.precaching.precacheAndRoute(self.__precacheManifest || []);
