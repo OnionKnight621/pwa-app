@@ -1,11 +1,143 @@
 import React, { Component } from 'react';
+import {BrowserRouter, Route, Link} from 'react-router-dom'
 import logo from './logo.svg';
 import './App.css';
-import { DH_NOT_SUITABLE_GENERATOR } from 'constants';
+import profileLogo from './default_avatar.png'
 
 const localhostIp = `http://192.168.0.104:4567`;
 
-class App extends Component {
+function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4-base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, "+")
+    .replace(/_/g, "/")
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  };
+
+  return outputArray;
+}
+
+class Profile extends Component {
+
+  state = {
+    image: null,
+    supportCamera: 'mediaDevices' in navigator
+  }
+
+  changeImage = (e) => {
+    this.setState({
+      image: URL.createObjectURL(e.target.files[0])
+    })
+  }
+
+  startChangeImage = () => {
+    this.setState({
+      enableCamera: !this.state.enableCamera
+    })
+  }
+
+  takeImage = () => {
+    this._canvas.width = this._video.videoWidth;
+    this._canvas.height = this._video.videoHeight;
+
+    this._canvas.getContext('2d').drawImage(
+      this._video,
+      0, 0,
+      this._video.videoWidth,
+      this._video.videoHeight
+    )
+
+    this._video.srcObject.getVideoTracks().forEach(track => {
+      track.stop()
+    })
+
+    this.setState({
+      image: this._canvas.toDataURL(),
+      enableCamera: false
+    })
+  }
+
+  subscribe = () => {
+    const publKey = 'BPaTO6-eFBDImqHM_w_mIY-OM0JSTbINffuxIaFyCdzc6p9-p2s1cQ2OH9nfStTv7Fk682EK8Spuq4ZRt-R39GA'
+    const privateKey = 'GUF51nFS_EhEiR7JgG2PKi94TKPuqRIpA7k55JyXK_I'
+
+    global.registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8Array(publKey)
+    }).then(sub => {
+      console.log('Subscribed')
+    }).catch(err => {
+      console.log('Error on subscription ', err)
+    })
+  }
+
+  pushMessage = () => {
+    global.registration.showNotification('Pushed', {
+      body: 'Pushed'
+    })
+  }
+
+  render () {
+    return (
+      <div>
+        <nav className="navbar-light bg-light">
+          <span className="navbar-brand mb-0 h1">
+            <Link to="/">
+              <img src={logo} alt="logo"/>
+            </Link>
+            Profile
+          </span>
+        </nav>
+  
+        <div style={{textAlign: 'center'}}>
+          <img src={this.state.image || profileLogo} alt="profile" style={{height: 200, marginTop: 50}}/>
+          <p style={{color: '#888', fontSize: 20}}>username</p>
+
+          {
+            this.state.enableCamera && 
+            <div>
+              <video ref={c => {
+                this._video = c;
+                if (this._video) {
+                  navigator.mediaDevices.getUserMedia({ video: true }).then(stream => this._video.srcObject = stream)
+                }
+              }} controls={false} autoPlay style={{width: '100%', maxWidth: 300}}></video>
+            </div>
+          }
+
+          <br/>
+          <input type="file" accept="image/*" name="photo" id="phto" onChange={this.changeImage} capture="user  " />
+
+          {
+            this.state.supportCamera &&
+            <div>
+              <button onClick={this.startChangeImage}>Toggle camera</button>
+              <br/>
+              <button onClick={this.takeImage}>
+                take image
+              </button>
+              <canvas ref={c => this._canvas = c} style={{display: 'none'}} />
+            </div>
+          }
+
+          <br/>
+          <button onClick={this.subscribe}>Subscribe for notifications</button>
+
+          <br/>
+          <button onClick={this.pushMessage }>Push</button>
+
+        </div>
+      </div>
+    )
+  }
+}
+
+class List extends Component {
   state = {
     items: [],
     loading: true,
@@ -84,6 +216,10 @@ class App extends Component {
               offline
             </span>
           }
+
+          <span>
+            <Link to="/profile">Profile</Link>
+          </span>
         </nav>
 
         <div className="px-3 py-2">
@@ -124,9 +260,17 @@ class App extends Component {
             </table>
           }
         </div>
+
+        <button class="add-button">Add to home screen</button>
       </div>
     );
   }
 }
 
-export default App;
+export default () => 
+  <BrowserRouter>
+  <div>
+    <Route path="/" exact component={List}/>
+    <Route path="/profile" exact component={Profile}/>
+  </div>
+  </BrowserRouter>
