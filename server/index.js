@@ -22,8 +22,11 @@ app.use((req, res, next) => {
 });
 
 let items = [
-    { id: uuidV4(), item: 'Random item 1'},
-    { id: uuidV4(), item: 'Random item 2'}
+    { id: uuidV4(), item: 'Item 1'},
+    { id: uuidV4(), item: 'Item 2'},
+    { id: uuidV4(), item: 'Item 3'},
+    { id: uuidV4(), item: 'Item 4'},
+    { id: uuidV4(), item: 'Item 5'},
 ];
 
 app.get('/items', (req, res) => {
